@@ -1,0 +1,11 @@
+# never commit game data
+*.gb
+*.gbc
+*.cia
+*.cxi
+*.3ds
+*.bin
+*.cst
+*.sav
+*.dat
+__pycache__/

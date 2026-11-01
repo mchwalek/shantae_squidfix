@@ -1,0 +1,57 @@
+name: Test report
+description: Report how one of the patches behaved for you
+title: "Test report: "
+labels: ["test report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for testing. Do not attach ROMs, CIAs, code.bin or savestates; hashes are enough.
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Real 3DS with Luma3DS (code.ips)
+        - Azahar (code.ips)
+        - GBC emulator or flash cart (ROM IPS)
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Console model or emulator
+      placeholder: e.g. New Nintendo 3DS XL (EUR), Azahar 2125, SameBoy 1.0
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Luma3DS / emulator version
+      placeholder: e.g. Luma3DS v13.3.3
+  - type: input
+    id: title
+    attributes:
+      label: Game version
+      description: Title ID and installed update for the 3DS, or the SHA-1 of the ROM before patching.
+      placeholder: e.g. 00040000000BE500, update installed
+  - type: dropdown
+    id: crashed
+    attributes:
+      label: Did the game crash?
+      options:
+        - "No"
+        - "Yes"
+    validations:
+      required: true
+  - type: input
+    id: pickups
+    attributes:
+      label: Squids or items collected
+      placeholder: e.g. 12 squids, 3 heart holders
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything else, e.g. audio or video glitches, where the crash happened.

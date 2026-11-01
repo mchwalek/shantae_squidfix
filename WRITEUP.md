@@ -4,7 +4,7 @@
 
 Since the 2013 eShop release, players have reported that collecting a baby warp squid in *Shantae* (GBC) on the 3DS
 Virtual Console sometimes freezes the game on a solid blue screen (sometimes with garbage on screen), and that after a
-reset the save file is sometimes gone. The Switch port (2021) shows the same crash. Nobody reported it on cartridge.
+reset the save file is sometimes gone. The Switch port (2021) shows the same crash. Nobody reported it on the original GBC cartridge.
 The Shantae Wiki lists the cause as unknown.
 
 ## Short version
@@ -218,3 +218,6 @@ bl    cpu_run
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
 Not tested yet: a real 3DS with Luma3DS, and the Switch port.
+
+The investigation, the fixes and this write-up were done with an AI coding agent (Claude by Anthropic) under human
+direction.

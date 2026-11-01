@@ -50,10 +50,15 @@ US ROM:
 | after the patch | `6fc1ecf666cf24043998e8bd16bea0981cee0799` |
 
 The patch changes 34 bytes at `0x542`-`0x563` and nothing else (the header checksum is left alone; the GBC
-does not check it). It is compatible with the "dance floor hang bugfix" ROM hack: the bytes do not overlap.
+does not check it). None of its bytes overlap with these ROM hacks, so it can be combined with them
+(checked on a ROM with all three applied):
 
-On cartridge and in accurate emulators (SameBoy, mGBA, ...) the crash never happens, so the ROM fix only
-matters in inaccurate emulators. It cannot be applied to the official Switch, PS4 or PS5 releases.
+- [Shantae dance floor hang bugfix](https://www.romhacking.net/hacks/3785/) by Griever
+- [Shantae - Force GBA Enhanced Mode](https://www.romhacking.net/hacks/3462/) by Polar-Star
+- [Shantae GBC palettes](https://www.romhacking.net/hacks/3567/) by Stewmat
+
+On the original GBC cartridge the crash has never been reported, and in SameBoy (cycle-accurate) it never happened
+in testing. Other GBC emulators were not tested. It cannot be applied to the official Switch, PS4 or PS5 releases.
 
 ## Test status
 
@@ -78,6 +83,12 @@ python tools/dmastall.py code.bin code.ips                          # or out.bin
 
 This repository contains no ROMs, CIAs or Nintendo code: only the patches and the scripts that make them.
 Use your own dumps.
+
+## How this was made
+
+The investigation, both fixes, the scripts and this documentation were done with an AI coding agent
+(Claude by Anthropic) under human direction. The claims rest on the reproductions in [WRITEUP.md](WRITEUP.md),
+not on the AI's word; if something does not hold up, please open an issue.
 
 ## Disclaimer
 

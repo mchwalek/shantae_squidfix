@@ -217,7 +217,9 @@ bl    cpu_run
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
-Not tested yet: a real 3DS with Luma3DS, and the Switch port.
+| Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3), `code.ips` | boots, patch applied, squid collected without a crash (single run) |
+
+Not tested yet: the crash rate on a real 3DS over many pickups, and the Switch port.
 
 The investigation, the fixes and this write-up were done with an AI coding agent (Claude by Anthropic) under human
 direction.

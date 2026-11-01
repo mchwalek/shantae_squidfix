@@ -35,7 +35,7 @@ GodMode9) and run `python tools/dmastall.py code.bin out.bin`: it refuses unknow
 ## Azahar (3DS emulator)
 
 Put the same file at `load/mods/00040000000BE500/exefs/code.ips` inside the Azahar user directory
-(right-click the game, **Open Mods Location**, and create the `exefs` folder there). Start the game from the
+(right-click the game, **Open > Mods Location**, and create the `exefs` folder there). Start the game from the
 menu: savestates made before the patch keep running the old emulator code. The Azahar log shows
 `ApplyCodePatch: ... patching code.bin` when it works.
 
@@ -66,11 +66,11 @@ in testing. Other GBC emulators were not tested. It cannot be applied to the off
 |---|---|
 | eShop VC in Azahar, squid pickup with every input timing from 81 consecutive frames | unpatched 5/81 crash, with `code.ips` 0/81 |
 | ROM fix in SameBoy and PyBoy with the interrupt forced into the race window | unpatched ROM crashes every time, patched ROM never |
-| **Real 3DS with Luma3DS** | **not tested yet** |
+| Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3) with `code.ips` | boots, patch applied, squid collected without a crash (a single run, so not proof) |
 | Switch port | not analysed (different emulator) |
 
-If you try it on a real 3DS, please open an issue with your result (Luma3DS version, whether the crash still
-happens, and whether the game otherwise behaves normally).
+If you try it on a real 3DS, please open an issue with the "Test report" template (console, Luma3DS version,
+whether the crash still happens, and whether the game otherwise behaves normally).
 
 ## Building the patches yourself
 

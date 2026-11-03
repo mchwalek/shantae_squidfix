@@ -48,6 +48,10 @@ US ROM:
 |---|---|
 | Shantae (USA), unpatched | `520e48c50f6e997fcd841ca368fc9abc1dbddec1` |
 | after the patch | `6fc1ecf666cf24043998e8bd16bea0981cee0799` |
+| PS4 release, original ROM, unpatched | `5540d3e8d2586ab85970796d97bb77c1cbae7f93` |
+| after the patch | `b780ba54371a963e0c1bafb69776e9024629dd84` |
+| PS4 release, enhanced ROM, unpatched | `9ab5ddfd8a5213e578a8ece32e90a81b9c8c0a51` |
+| after the patch | `b3e937795859c18d033ccb884bb0c813a6f45bd0` |
 
 The patch changes 34 bytes at `0x542`-`0x563` and nothing else (the header checksum is left alone; the GBC
 does not check it). None of its bytes overlap with these ROM hacks, so it can be combined with them

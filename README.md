@@ -15,7 +15,7 @@ There are two independent fixes. Each one alone prevents the crash.
 | Emulator fix | [`patches/3ds/luma/titles/00040000000BE500/code.ips`](patches/3ds/luma/titles/00040000000BE500/code.ips) | the VC emulator's DMA timing | 3DS eShop VC (US, title ID `00040000000BE500`), Luma3DS or Azahar |
 | ROM fix | [`patches/gbc/Shantae_warpsquid_fix.ips`](patches/gbc/Shantae_warpsquid_fix.ips) | the bug in the game itself | the GBC ROM, any emulator or flash cart |
 
-> **Back up your save first.** The crash wipes the save, and these patches are only tested in emulators so far.
+> **Back up your save first.** On the 3DS VC the crash can wipe the save (in a PS4 emulator it did not, but that is not ruled out), and these patches are only tested in emulators so far.
 
 ## 3DS (eShop Virtual Console) with Luma3DS
 

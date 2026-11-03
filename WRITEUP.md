@@ -17,7 +17,11 @@ The Shantae Wiki lists the cause as unknown.
    routine, unbalances the stack and eventually reaches address `0x0038`.
 4. `0x0038` holds `0xFF` = `rst $38`, a call to `0x0038` itself. The CPU recurses forever, and every iteration pushes
    two bytes. The stack walks down through work RAM, **cartridge save RAM (the save file)**, video RAM and palette RAM:
-   the screen turns one colour and the save is overwritten.
+   the screen turns one colour and the save is overwritten. Save RAM is normally switched off, but before reaching
+   `0x0038` the wild code runs a sprite routine with a stray pointer that writes sprite bytes to `0x13xx`, the cartridge's
+   RAM-enable register; bytes like `0x2A` switch save RAM on (as on a real cartridge). When the loop then reaches
+   `0x1FFF`..`0x0000`, its writes switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at
+   that moment.
 5. On real hardware the main code is always done with its far calls long before VBlank, so the window is never hit.
    The 3DS VC emulator does not charge any LCD time for the CPU stall during GDMA copies, which the VBlank handler uses
    for its graphics queue. The handler ends about 14 scanlines early, the main code runs ahead, and in the squid pickup
@@ -148,9 +152,10 @@ fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only
 graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too. It is: in the PS4 emulator shadPS4,
 which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
 timings with the original ROM and 0 of 81 with the ROM IPS; the enhanced ROM 6 of 81 and 0 of 81 (no crash reports known,
-not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. Unlike the 3DS, the save survived a real crash
-in shadPS4: the PS4 emulator ignores writes to cartridge RAM while the game has it disabled (it is enabled only while
-saving or loading), and the crash loop's writes can only disable it, so the battery file is never overwritten.
+not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. Unlike the 3DS, the save survived two real crashes
+in shadPS4: in those runs save RAM was switched off when the loop crossed it, so the PS4 emulator ignored the writes.
+Its cartridge code does write the battery file when save RAM is switched off after a write, like the VC, so a wiped save
+on PS4 is not ruled out; it depends on the path the wild code takes.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).

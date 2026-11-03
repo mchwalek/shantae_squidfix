@@ -147,8 +147,10 @@ delay, line length, double speed) matches the hardware, so free DMA is the only 
 fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only change text, button prompts and
 graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too. It is: in the PS4 emulator shadPS4,
 which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
-timings with the original ROM and 0 of 81 with the ROM IPS (no crash reports known, not tested on a PS4 console). The ROM
-IPS applies to both ROMs unchanged.
+timings with the original ROM and 0 of 81 with the ROM IPS; the enhanced ROM 6 of 81 and 0 of 81 (no crash reports known,
+not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. Unlike the 3DS, the save survived a real crash
+in shadPS4: the PS4 emulator ignores writes to cartridge RAM while the game has it disabled (it is enabled only while
+saving or loading), and the crash loop's writes can only disable it, so the battery file is never overwritten.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -247,6 +249,8 @@ bl    cpu_run
 | SameBoy with GDMA stall made free (VC behaviour), stock ROM | 2/121 crash |
 | SameBoy with GDMA stall made free, PS4 ROM (original / enhanced) | 5/121 / 2/121 crash; with the IPS 0/121 each |
 | shadPS4 (PS4 emulator), PS4 original ROM, Right held from each of 81 input frames | 9/81 crash; with the IPS 0/81 |
+| shadPS4, PS4 enhanced ROM, same sweep | 6/81 crash; with the IPS 0/81 |
+| shadPS4, PS4 original ROM, real crash with the save loaded | save file unchanged, file still listed |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 

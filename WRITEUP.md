@@ -119,6 +119,11 @@ faster relative to the LCD; instruction timings themselves are exact.
 
 The Switch port uses a different emulator and was not analysed; the crash there suggests a similar DMA shortcut.
 
+The PS4 release (Limited Run Games' Carbon engine, 2023) has the same shortcut: its GBC core performs general DMA and
+HBlank DMA without charging any CPU cycles. Its two ROMs (original and "enhanced" GBA mode) only change text, button
+prompts and graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too (no reports
+known, not tested on a PS4). The ROM IPS applies to both unchanged.
+
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
 
@@ -214,12 +219,13 @@ bl    cpu_run
 | same with `code.ips` | 0/81 |
 | SameBoy (cycle-accurate), stock ROM, 121 input timings | 0/121 crash |
 | SameBoy with GDMA stall made free (VC behaviour), stock ROM | 2/121 crash |
+| SameBoy with GDMA stall made free, PS4 ROM (original / enhanced) | 5/121 / 2/121 crash; with the IPS 0/121 each |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
 | Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3), `code.ips` | boots, patch applied, squid collected without a crash (single run) |
 
-Not tested yet: the crash rate on a real 3DS over many pickups, and the Switch port.
+Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console.
 
 The investigation, the fixes and this write-up were done with an AI coding agent (Claude by Anthropic) under human
 direction.

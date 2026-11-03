@@ -145,8 +145,10 @@ HBlank DMA (`0x8d28a`, inside the LCD code) copies its block the same way, also 
 compared with the documented Game Boy timing, the rest of the core (instruction timings, interrupt dispatch, the `ei`
 delay, line length, double speed) matches the hardware, so free DMA is the only known relevant difference (mode 3 has a
 fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only change text, button prompts and
-graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too (no reports known, not
-tested on a PS4). The ROM IPS applies to both unchanged.
+graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too. It is: in the PS4 emulator shadPS4,
+which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
+timings with the original ROM and 0 of 81 with the ROM IPS (no crash reports known, not tested on a PS4 console). The ROM
+IPS applies to both ROMs unchanged.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -244,12 +246,13 @@ bl    cpu_run
 | SameBoy (cycle-accurate), stock ROM, 121 input timings | 0/121 crash |
 | SameBoy with GDMA stall made free (VC behaviour), stock ROM | 2/121 crash |
 | SameBoy with GDMA stall made free, PS4 ROM (original / enhanced) | 5/121 / 2/121 crash; with the IPS 0/121 each |
+| shadPS4 (PS4 emulator), PS4 original ROM, Right held from each of 81 input frames | 9/81 crash; with the IPS 0/81 |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
 | Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3), `code.ips` | boots, patch applied, squid collected without a crash (single run) |
 
-Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console.
+Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console (only in shadPS4).
 
 The investigation, the fixes and this write-up were done with an AI coding agent (Claude by Anthropic) under human
 direction.

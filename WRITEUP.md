@@ -120,9 +120,33 @@ faster relative to the LCD; instruction timings themselves are exact.
 The Switch port uses a different emulator and was not analysed; the crash there suggests a similar DMA shortcut.
 
 The PS4 release (Limited Run Games' Carbon engine, 2023) has the same shortcut: its GBC core performs general DMA and
-HBlank DMA without charging any CPU cycles. Its two ROMs (original and "enhanced" GBA mode) only change text, button
-prompts and graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too (no reports
-known, not tested on a PS4). The ROM IPS applies to both unchanged.
+HBlank DMA without charging any CPU cycles. The core's main loop advances the LCD only by the cycles each instruction
+returns (plus 20 per interrupt dispatch); the `FF55` write handler copies all blocks inside that one instruction and never
+touches the cycle counter (update 1.01 `eboot.bin`, x86-64 addresses):
+
+```
+; main loop
+87ae2  call 0x99260                 ; execute one opcode -> eax = its cycles
+87aed  call 0x8bcf0                 ; interrupt dispatch -> 0 or 20
+87af2  add  eax, [cycles]
+87b07  call 0x8d170                 ; LCD advances by exactly these cycles
+
+; FF55 write, general DMA (bit 7 clear)
+8d631  mov  [hdma_len], ax          ; blocks - 1
+8d68a  mov  r12d, 0x10              ; per block: 16 bytes
+8d6ad  call 0x97400                 ;   write byte to destination
+8d6cb  dec  r12d                    ;   (src++, dst++)
+8d67e  cmp  r14d, ecx               ; next block until all done
+8d8be  mov  word [hdma_len], 0xff   ; finished
+8d8d7  ret                          ; no cycles charged
+```
+
+HBlank DMA (`0x8d28a`, inside the LCD code) copies its block the same way, also for free. Read from the executable and
+compared with the documented Game Boy timing, the rest of the core (instruction timings, interrupt dispatch, the `ei`
+delay, line length, double speed) matches the hardware, so free DMA is the only known relevant difference (mode 3 has a
+fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only change text, button prompts and
+graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too (no reports known, not
+tested on a PS4). The ROM IPS applies to both unchanged.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).

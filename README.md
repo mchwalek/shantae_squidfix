@@ -15,7 +15,7 @@ There are two independent fixes. Each one alone prevents the crash.
 | Emulator fix | [`patches/3ds/luma/titles/00040000000BE500/code.ips`](patches/3ds/luma/titles/00040000000BE500/code.ips) | the VC emulator's DMA timing | 3DS eShop VC (US, title ID `00040000000BE500`), Luma3DS or Azahar |
 | ROM fix | [`patches/gbc/Shantae_warpsquid_fix.ips`](patches/gbc/Shantae_warpsquid_fix.ips) | the bug in the game itself | the GBC ROM, any emulator or flash cart |
 
-> **Back up your save first.** The crash wipes the save, and these patches are only tested in emulators so far.
+> **Back up your save first.** The crash can wipe the save (seen on the 3DS VC and in a PS4 emulator), and these patches are only tested in emulators so far.
 
 ## 3DS (eShop Virtual Console) with Luma3DS
 
@@ -72,7 +72,7 @@ in testing. Other GBC emulators were not tested. It cannot be applied to the off
 | ROM fix in SameBoy and PyBoy with the interrupt forced into the race window | unpatched ROM crashes every time, patched ROM never |
 | Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3) with `code.ips` | boots, patch applied, squid collected without a crash (a single run, so not proof) |
 | Switch port | not analysed (different emulator) |
-| PS4 release (Limited Run Carbon engine) | not tested on a PS4. Its GBC ROM has the same helper bug and its emulator also treats the DMA stall as free (found in the executable); SameBoy with free DMA and that ROM: 5/121 crash, with the IPS 0/121. No crash reports known |
+| PS4 release (Limited Run Carbon engine) | reproduced in the shadPS4 emulator (it runs the game's own emulator code): 9/81 input timings crash (enhanced ROM 6/81), with the IPS 0/81; some crashes there wiped the save (about 2 in 5 in one game state), others left it intact; not tested on a PS4 console. Its GBC ROM has the same helper bug and its emulator also treats the DMA stall as free (read from the executable; the rest of its timing matches the documented hardware timing); SameBoy with free DMA and that ROM: 5/121 crash, with the IPS 0/121. No crash reports known |
 
 If you try it on a real 3DS, please open an issue with the "Test report" template (console, Luma3DS version,
 whether the crash still happens, and whether the game otherwise behaves normally).

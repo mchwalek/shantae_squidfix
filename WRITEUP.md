@@ -17,7 +17,16 @@ The Shantae Wiki lists the cause as unknown.
    routine, unbalances the stack and eventually reaches address `0x0038`.
 4. `0x0038` holds `0xFF` = `rst $38`, a call to `0x0038` itself. The CPU recurses forever, and every iteration pushes
    two bytes. The stack walks down through work RAM, **cartridge save RAM (the save file)**, video RAM and palette RAM:
-   the screen turns one colour and the save is overwritten.
+   the screen turns one colour and the save is overwritten. Save RAM is normally switched off; the loop's own bytes
+   (`0x00`, `0x39`) cannot switch it on, but the derailed code before `0x0038` writes to `0x0000`-`0x1FFF`, the
+   cartridge's RAM-enable register. Two paths were seen (SameBoy): a sprite routine with a stray pointer writes sprite
+   bytes such as `0x2A` to `0x13xx`; or code running in HRAM writes `0x00`, `0xFD`, `0xCF`. The 3DS VC switches save
+   RAM on for both (it only checks `(value & 0x0A) == 0x0A`). A real cartridge (MBC5) is stricter: Pan Docs says any
+   value with low nibble `0xA` switches it on (so `0x2A` would), the Game Boy: Complete Technical Reference (gekkio) and
+   SameBoy say only exactly `0x0A` does (so neither path would). When the loop then reaches `0x1FFF`..`0x0000`, its writes
+   switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment. In an 81-frame
+   sweep on the eShop VC (with an input hook that never touches the RAM-enable register) all 6 crashes overwrote
+   `sav.dat` with `39 00`, so on the 3DS most crashes cost the save (players also report crashes that left it intact).
 5. On real hardware the main code is always done with its far calls long before VBlank, so the window is never hit.
    The 3DS VC emulator does not charge any LCD time for the CPU stall during GDMA copies, which the VBlank handler uses
    for its graphics queue. The handler ends about 14 scanlines early, the main code runs ahead, and in the squid pickup
@@ -120,9 +129,53 @@ faster relative to the LCD; instruction timings themselves are exact.
 The Switch port uses a different emulator and was not analysed; the crash there suggests a similar DMA shortcut.
 
 The PS4 release (Limited Run Games' Carbon engine, 2023) has the same shortcut: its GBC core performs general DMA and
-HBlank DMA without charging any CPU cycles. Its two ROMs (original and "enhanced" GBA mode) only change text, button
-prompts and graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too (no reports
-known, not tested on a PS4). The ROM IPS applies to both unchanged.
+HBlank DMA without charging any CPU cycles. The core's main loop advances the LCD only by the cycles each instruction
+returns (plus 20 per interrupt dispatch); the `FF55` write handler copies all blocks inside that one instruction and never
+touches the cycle counter (update 1.01 `eboot.bin`, x86-64 addresses):
+
+```
+; main loop
+87ae2  call 0x99260                 ; execute one opcode -> eax = its cycles
+87aed  call 0x8bcf0                 ; interrupt dispatch -> 0 or 20
+87af2  add  eax, [cycles]
+87b07  call 0x8d170                 ; LCD advances by exactly these cycles
+
+; FF55 write, general DMA (bit 7 clear)
+8d631  mov  [hdma_len], ax          ; blocks - 1
+8d68a  mov  r12d, 0x10              ; per block: 16 bytes
+8d6ad  call 0x97400                 ;   write byte to destination
+8d6cb  dec  r12d                    ;   (src++, dst++)
+8d67e  cmp  r14d, ecx               ; next block until all done
+8d8be  mov  word [hdma_len], 0xff   ; finished
+8d8d7  ret                          ; no cycles charged
+```
+
+HBlank DMA (`0x8d28a`, inside the LCD code) copies its block the same way, also for free. Read from the executable and
+compared with the documented Game Boy timing, the rest of the core (instruction timings, interrupt dispatch, the `ei`
+delay, line length, double speed) matches the hardware, so free DMA is the only known relevant difference (mode 3 has a
+fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only change text, button prompts and
+graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too. It is: in the PS4 emulator shadPS4,
+which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
+timings with the original ROM and 0 of 81 with the ROM IPS; the enhanced ROM 6 of 81 and 0 of 81 (no crash reports known,
+not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. With the unmodified timing the save survived two real
+crashes in shadPS4: the PS4 emulator needs low nibble `0xA` to switch save RAM on, and all crashing timings there took the HRAM
+path (`0xCF` write), so save RAM stayed off and the loop's writes were ignored. A second sweep of 200 input timings
+with a ROM that reports whether save RAM is on when `0x0038` is reached gave 18 crashes, all on the HRAM path, save
+RAM never on, the save file never written. Its cartridge code does write the battery file when save RAM is switched
+off after a write, like the VC, so the sprite-routine path (`0x2A`, seen in SameBoy in 2 of 5 crashes) wipes the save
+on PS4 too. Shifting the far call later in the frame (a fixed delay of about one line added every frame) makes the
+crash take that path: in shadPS4, 12 of 80 such timings crashed, all with save RAM on at `0x0038`, and one real crash
+overwrote the whole save file with `00 39`; after a restart the file select showed three empty files. So the PS4
+release can lose the save too.
+
+Which path a crash takes, and whether a pickup can crash at all, also depends on the game state before the pickup.
+A state saved in shadPS4 after walking to the same squid from the save file never crashed (0 of 200 tries, and 0 of
+121 timings in SameBoy with free DMA). Swapping parts of it into the 3DS restore point narrowed the difference down
+to two bytes: `FFB3/FFB4`, the next free object slot. Both states hold the same objects, but in different slots
+(this depends on what was spawned and removed earlier), so the objects created by the pickup land elsewhere,
+which presumably changes how much work runs before the far call in that frame (cycle counts not traced). With only
+those two bytes set to the 3DS value, the otherwise unmodified PS4 state crashed in 15 of 200 tries in shadPS4, and 6
+of those 15 had save RAM on at `0x0038` (the save-wiping path). SameBoy gives 11 of 121, 6 of them on that path.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -217,15 +270,23 @@ bl    cpu_run
 |---|---|
 | Azahar, eShop VC, Right held from each of 81 consecutive input frames | 5/81 crash (deterministic, 10/10 on rerun) |
 | same with `code.ips` | 0/81 |
+| Azahar, eShop VC, other pre-squid state, 81 input frames, `sav.dat` checked | 6/81 crash, all 6 overwrote `sav.dat` (save lost) |
 | SameBoy (cycle-accurate), stock ROM, 121 input timings | 0/121 crash |
 | SameBoy with GDMA stall made free (VC behaviour), stock ROM | 2/121 crash |
 | SameBoy with GDMA stall made free, PS4 ROM (original / enhanced) | 5/121 / 2/121 crash; with the IPS 0/121 each |
+| shadPS4 (PS4 emulator), PS4 original ROM, Right held from each of 81 input frames | 9/81 crash; with the IPS 0/81 |
+| shadPS4, PS4 enhanced ROM, same sweep | 6/81 crash; with the IPS 0/81 |
+| shadPS4, PS4 original ROM, real crash with the save loaded | save file unchanged, file still listed |
+| shadPS4, PS4 original ROM, 200 input frames, save RAM state checked at `0x0038` | 18/200 crash, save RAM off in all, save file never written |
+| shadPS4, PS4 original ROM, 80 timings with a per-frame delay (~1 line) | 12/80 crash, save RAM on in all; one real crash wiped the save (file select empty) |
+| shadPS4, PS4 original ROM, state saved in shadPS4 before the squid, 200 random input delays | 0/200 crash |
+| shadPS4, same state with only the next free object slot (`FFB3/FFB4`) set to the 3DS value | 15/200 crash, 6 of them with save RAM on (would wipe the save) |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
 | Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3), `code.ips` | boots, patch applied, squid collected without a crash (single run) |
 
-Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console.
+Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console (only in shadPS4).
 
 The investigation, the fixes and this write-up were done with an AI coding agent (Claude by Anthropic) under human
 direction.

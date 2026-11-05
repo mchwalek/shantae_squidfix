@@ -164,7 +164,16 @@ off after a write, like the VC, so the sprite-routine path (`0x2A`, seen in Same
 on PS4 too. Shifting the far call later in the frame (a fixed delay of about one line added every frame) makes the
 crash take that path: in shadPS4, 12 of 80 such timings crashed, all with save RAM on at `0x0038`, and one real crash
 overwrote the whole save file with `00 39`; after a restart the file select showed three empty files. So the PS4
-release can lose the save too; how often the sprite path occurs without the added delay is unknown (0 of 18 crashes).
+release can lose the save too.
+
+Which path a crash takes, and whether a pickup can crash at all, also depends on the game state before the pickup.
+A state saved in shadPS4 after walking to the same squid from the save file never crashed (0 of 200 tries, and 0 of
+121 timings in SameBoy with free DMA). Swapping parts of it into the 3DS restore point narrowed the difference down
+to two bytes: `FFB3/FFB4`, the next free object slot. Both states hold the same objects, but in different slots
+(this depends on what was spawned and removed earlier), so the objects created by the pickup land elsewhere,
+which presumably changes how much work runs before the far call in that frame (cycle counts not traced). With only
+those two bytes set to the 3DS value, the otherwise unmodified PS4 state crashed in 15 of 200 tries in shadPS4, and 6
+of those 15 had save RAM on at `0x0038` (the save-wiping path). SameBoy gives 11 of 121, 6 of them on that path.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -267,6 +276,8 @@ bl    cpu_run
 | shadPS4, PS4 original ROM, real crash with the save loaded | save file unchanged, file still listed |
 | shadPS4, PS4 original ROM, 200 input frames, save RAM state checked at `0x0038` | 18/200 crash, save RAM off in all, save file never written |
 | shadPS4, PS4 original ROM, 80 timings with a per-frame delay (~1 line) | 12/80 crash, save RAM on in all; one real crash wiped the save (file select empty) |
+| shadPS4, PS4 original ROM, state saved in shadPS4 before the squid, 200 random input delays | 0/200 crash |
+| shadPS4, same state with only the next free object slot (`FFB3/FFB4`) set to the 3DS value | 15/200 crash, 6 of them with save RAM on (would wipe the save) |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 

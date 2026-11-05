@@ -26,7 +26,7 @@ The Shantae Wiki lists the cause as unknown.
    SameBoy say only exactly `0x0A` does (so neither path would). When the loop then reaches `0x1FFF`..`0x0000`, its writes
    switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment. In an 81-frame
    sweep on the eShop VC (with an input hook that never touches the RAM-enable register) all 6 crashes overwrote
-   `sav.dat` with `39 00`, so on the 3DS a crash practically always costs the save.
+   `sav.dat` with `39 00`, so on the 3DS most crashes cost the save (players also report crashes that left it intact).
 5. On real hardware the main code is always done with its far calls long before VBlank, so the window is never hit.
    The 3DS VC emulator does not charge any LCD time for the CPU stall during GDMA copies, which the VBlank handler uses
    for its graphics queue. The handler ends about 14 scanlines early, the main code runs ahead, and in the squid pickup

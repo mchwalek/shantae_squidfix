@@ -283,7 +283,6 @@ bl    cpu_run
 | shadPS4, same state with only the next free object slot (`FFB3/FFB4`) set to the 3DS value | 15/200 crash, 6 of them with save RAM on (would wipe the save) |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
-
 | Real 3DS (New Nintendo 3DS LL, Luma3DS v13.3.3), `code.ips` | boots, patch applied, squid collected without a crash (single run) |
 
 Not tested yet: the crash rate on a real 3DS over many pickups, the Switch port, and the PS4 release on a console (only in shadPS4).

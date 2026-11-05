@@ -24,7 +24,9 @@ The Shantae Wiki lists the cause as unknown.
    RAM on for both (it only checks `(value & 0x0A) == 0x0A`). A real cartridge (MBC5) is stricter: Pan Docs says any
    value with low nibble `0xA` switches it on (so `0x2A` would), the Game Boy: Complete Technical Reference (gekkio) and
    SameBoy say only exactly `0x0A` does (so neither path would). When the loop then reaches `0x1FFF`..`0x0000`, its writes
-   switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment.
+   switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment. In an 81-frame
+   sweep on the eShop VC (with an input hook that never touches the RAM-enable register) all 6 crashes overwrote
+   `sav.dat` with `39 00`, so on the 3DS a crash practically always costs the save.
 5. On real hardware the main code is always done with its far calls long before VBlank, so the window is never hit.
    The 3DS VC emulator does not charge any LCD time for the CPU stall during GDMA copies, which the VBlank handler uses
    for its graphics queue. The handler ends about 14 scanlines early, the main code runs ahead, and in the squid pickup
@@ -268,6 +270,7 @@ bl    cpu_run
 |---|---|
 | Azahar, eShop VC, Right held from each of 81 consecutive input frames | 5/81 crash (deterministic, 10/10 on rerun) |
 | same with `code.ips` | 0/81 |
+| Azahar, eShop VC, other pre-squid state, 81 input frames, `sav.dat` checked | 6/81 crash, all 6 overwrote `sav.dat` (save lost) |
 | SameBoy (cycle-accurate), stock ROM, 121 input timings | 0/121 crash |
 | SameBoy with GDMA stall made free (VC behaviour), stock ROM | 2/121 crash |
 | SameBoy with GDMA stall made free, PS4 ROM (original / enhanced) | 5/121 / 2/121 crash; with the IPS 0/121 each |

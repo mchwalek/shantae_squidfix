@@ -155,13 +155,16 @@ fixed length, a minor one). Its two ROMs (original and "enhanced" GBA mode) only
 graphics; the far-call helper at `0x0540` is unchanged, so the crash should be possible there too. It is: in the PS4 emulator shadPS4,
 which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
 timings with the original ROM and 0 of 81 with the ROM IPS; the enhanced ROM 6 of 81 and 0 of 81 (no crash reports known,
-not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. Unlike the 3DS, the save survived two real crashes
-in shadPS4: the PS4 emulator needs low nibble `0xA` to switch save RAM on, and all crashing timings there took the HRAM
+not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. With the unmodified timing the save survived two real
+crashes in shadPS4: the PS4 emulator needs low nibble `0xA` to switch save RAM on, and all crashing timings there took the HRAM
 path (`0xCF` write), so save RAM stayed off and the loop's writes were ignored. A second sweep of 200 input timings
 with a ROM that reports whether save RAM is on when `0x0038` is reached gave 18 crashes, all on the HRAM path, save
 RAM never on, the save file never written. Its cartridge code does write the battery file when save RAM is switched
-off after a write, like the VC, so the sprite-routine path (`0x2A`, seen in SameBoy in 2 of 5 crashes) would wipe the
-save on PS4 too; it never happened in shadPS4, so a wiped save on PS4 is unlikely but not ruled out.
+off after a write, like the VC, so the sprite-routine path (`0x2A`, seen in SameBoy in 2 of 5 crashes) wipes the save
+on PS4 too. Shifting the far call later in the frame (a fixed delay of about one line added every frame) makes the
+crash take that path: in shadPS4, 12 of 80 such timings crashed, all with save RAM on at `0x0038`, and one real crash
+overwrote the whole save file with `00 39`; after a restart the file select showed three empty files. So the PS4
+release can lose the save too; how often the sprite path occurs without the added delay is unknown (0 of 18 crashes).
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -263,6 +266,7 @@ bl    cpu_run
 | shadPS4, PS4 enhanced ROM, same sweep | 6/81 crash; with the IPS 0/81 |
 | shadPS4, PS4 original ROM, real crash with the save loaded | save file unchanged, file still listed |
 | shadPS4, PS4 original ROM, 200 input frames, save RAM state checked at `0x0038` | 18/200 crash, save RAM off in all, save file never written |
+| shadPS4, PS4 original ROM, 80 timings with a per-frame delay (~1 line) | 12/80 crash, save RAM on in all; one real crash wiped the save (file select empty) |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 

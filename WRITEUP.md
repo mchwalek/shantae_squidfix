@@ -20,10 +20,11 @@ The Shantae Wiki lists the cause as unknown.
    the screen turns one colour and the save is overwritten. Save RAM is normally switched off; the loop's own bytes
    (`0x00`, `0x39`) cannot switch it on, but the derailed code before `0x0038` writes to `0x0000`-`0x1FFF`, the
    cartridge's RAM-enable register. Two paths were seen (SameBoy): a sprite routine with a stray pointer writes sprite
-   bytes such as `0x2A` to `0x13xx`, which switches save RAM on as on a real cartridge; or code running in HRAM writes
-   `0x00`, `0xFD`, `0xCF`, which a real cartridge (low nibble must be `0xA`) ignores, but the 3DS VC accepts `0xCF` as
-   "on" (it only checks `(value & 0x0A) == 0x0A`). When the loop then reaches `0x1FFF`..`0x0000`, its writes switch save
-   RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment.
+   bytes such as `0x2A` to `0x13xx`; or code running in HRAM writes `0x00`, `0xFD`, `0xCF`. The 3DS VC switches save
+   RAM on for both (it only checks `(value & 0x0A) == 0x0A`). A real cartridge (MBC5) is stricter: Pan Docs says any
+   value with low nibble `0xA` switches it on (so `0x2A` would), the Game Boy: Complete Technical Reference (gekkio) and
+   SameBoy say only exactly `0x0A` does (so neither path would). When the loop then reaches `0x1FFF`..`0x0000`, its writes
+   switch save RAM off again, and the 3DS VC writes the changed save RAM to `sav.dat` at that moment.
 5. On real hardware the main code is always done with its far calls long before VBlank, so the window is never hit.
    The 3DS VC emulator does not charge any LCD time for the CPU stall during GDMA copies, which the VBlank handler uses
    for its graphics queue. The handler ends about 14 scanlines early, the main code runs ahead, and in the squid pickup
@@ -155,10 +156,12 @@ graphics; the far-call helper at `0x0540` is unchanged, so the crash should be p
 which runs the game's own x86-64 code (so its GBC core and timing) unchanged, the squid pickup crashed for 9 of 81 input
 timings with the original ROM and 0 of 81 with the ROM IPS; the enhanced ROM 6 of 81 and 0 of 81 (no crash reports known,
 not tested on a PS4 console). The ROM IPS applies to both ROMs unchanged. Unlike the 3DS, the save survived two real crashes
-in shadPS4: all crashing timings there took the HRAM path (`0xCF` write), and the PS4 emulator, like a real cartridge,
-needs low nibble `0xA` to switch save RAM on, so it stayed off and the loop's writes were ignored. Its cartridge code
-does write the battery file when save RAM is switched off after a write, like the VC, so the sprite-routine path
-(`0x2A`) would wipe the save on PS4 too; it was not seen in shadPS4, so a wiped save on PS4 is less likely but not ruled out.
+in shadPS4: the PS4 emulator needs low nibble `0xA` to switch save RAM on, and all crashing timings there took the HRAM
+path (`0xCF` write), so save RAM stayed off and the loop's writes were ignored. A second sweep of 200 input timings
+with a ROM that reports whether save RAM is on when `0x0038` is reached gave 18 crashes, all on the HRAM path, save
+RAM never on, the save file never written. Its cartridge code does write the battery file when save RAM is switched
+off after a write, like the VC, so the sprite-routine path (`0x2A`, seen in SameBoy in 2 of 5 crashes) would wipe the
+save on PS4 too; it never happened in shadPS4, so a wiped save on PS4 is unlikely but not ruled out.
 
 Not only squids: the suspend-music task is also queued by the item-get scripts for keys, transformation items,
 fireflies and heart holders, so those pickups can hit the same window (static analysis only).
@@ -259,6 +262,7 @@ bl    cpu_run
 | shadPS4 (PS4 emulator), PS4 original ROM, Right held from each of 81 input frames | 9/81 crash; with the IPS 0/81 |
 | shadPS4, PS4 enhanced ROM, same sweep | 6/81 crash; with the IPS 0/81 |
 | shadPS4, PS4 original ROM, real crash with the save loaded | save file unchanged, file still listed |
+| shadPS4, PS4 original ROM, 200 input frames, save RAM state checked at `0x0038` | 18/200 crash, save RAM off in all, save file never written |
 | SameBoy, race forced by hand, stock ROM / patched ROM | 3/3 crash / 0/3 |
 | PyBoy, patched ROM, interrupt forced inside the helper (108 trials) | 0 crashes |
 
